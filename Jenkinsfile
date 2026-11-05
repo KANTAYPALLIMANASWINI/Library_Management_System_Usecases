@@ -45,14 +45,29 @@ pipeline {
                 }
             }
         }
+
+        stage('SonarQube Analysis') {
+            steps {
+                dir('backend') {
+                    withSonarQubeEnv('SonarQube') {
+                        withEnv(["PATH+MAVEN=${tool 'Maven3'}/bin"]) {
+                            sh '''
+                                mvn -B sonar:sonar \
+                                  -Dsonar.projectKey=Library-Management-System
+                            '''
+                        }
+                    }
+                }
+            }
+        }
     }
 
     post {
         success {
-            echo 'Jenkins pipeline stages completed successfully.'
+            echo 'Jenkins CI pipeline completed successfully.'
         }
         failure {
-            echo 'Jenkins pipeline failed. Check Console Output.'
+            echo 'Jenkins CI pipeline failed. Check Console Output.'
         }
     }
 }
