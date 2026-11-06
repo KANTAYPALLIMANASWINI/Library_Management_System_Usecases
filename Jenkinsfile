@@ -52,7 +52,7 @@ pipeline {
                     withSonarQubeEnv('SonarQube') {
                         withEnv(["PATH+MAVEN=${tool 'Maven3'}/bin"]) {
                             sh '''
-                                mvn -B sonar:sonar \
+                                mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar \
                                   -Dsonar.projectKey=Library-Management-System
                             '''
                         }
