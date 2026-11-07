@@ -93,11 +93,13 @@ pipeline {
 
                 sh '''
                     echo "Building Docker image"
+
                     docker build \
-                      -t library-backend:$IMAGE_TAG \
-                      backend
+                        -t library-backend:$IMAGE_TAG \
+                        backend
 
                     echo "Docker image built successfully"
+
                     docker image inspect library-backend:$IMAGE_TAG
                 '''
             }
