@@ -104,17 +104,6 @@ pipeline {
                 '''
             }
         }
-    }
-
-    post {
-        success {
-            echo 'Jenkins CI pipeline completed successfully.'
-        }
-        failure {
-            echo 'Jenkins CI pipeline failed. Check Console Output.'
-        }
-    }
-}
 
         stage('Trivy Scan') {
             steps {
@@ -134,4 +123,15 @@ pipeline {
                 '''
             }
         }
+    }
+
+    post {
+        success {
+            echo 'Jenkins CI pipeline completed successfully.'
+        }
+        failure {
+            echo 'Jenkins CI pipeline failed. Check Console Output.'
+        }
+    }
+}
 
