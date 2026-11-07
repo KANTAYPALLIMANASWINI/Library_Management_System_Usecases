@@ -115,6 +115,7 @@ pipeline {
                         -v trivy-cache:/root/.cache/ \
                         aquasec/trivy:0.76.2 image \
                         --image-src docker \
+                        --timeout 30m \
                         --severity HIGH,CRITICAL \
                         --exit-code 1 \
                         library-backend:$IMAGE_TAG
@@ -134,4 +135,3 @@ pipeline {
         }
     }
 }
-
