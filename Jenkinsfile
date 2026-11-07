@@ -60,6 +60,48 @@ pipeline {
                 }
             }
         }
+
+        stage('SonarQube Quality Gate') {
+            steps {
+                timeout(time: 10, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Package Backend') {
+            steps {
+                dir('backend') {
+                    withEnv(["PATH+MAVEN=${tool 'Maven3'}/bin"]) {
+                        sh '''
+                            mvn -B -DskipTests package
+                            test -f target/library-1.0.0.jar
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                script {
+                    env.IMAGE_TAG = sh(
+                        script: 'git rev-parse --short HEAD',
+                        returnStdout: true
+                    ).trim()
+                }
+
+                sh '''
+                    echo "Building Docker image"
+                    docker build \
+                      -t library-backend:$IMAGE_TAG \
+                      backend
+
+                    echo "Docker image built successfully"
+                    docker image inspect library-backend:$IMAGE_TAG
+                '''
+            }
+        }
     }
 
     post {
