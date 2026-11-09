@@ -1,6 +1,6 @@
 package com.library.config;
 import org.springframework.context.annotation.*;
-import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
+import org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory;
 @Configuration
 public class TomcatConfig {
  // NIO2 uses Windows asynchronous I/O, avoiding the JDK selector's Unix-domain wakeup pipe.
