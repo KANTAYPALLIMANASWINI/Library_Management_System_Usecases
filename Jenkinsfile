@@ -4,6 +4,7 @@ pipeline {
 
     stages {
 
+        // STAGE 1: Environment Check
         stage('Environment Check') {
             steps {
                 sh '''
@@ -15,6 +16,7 @@ pipeline {
             }
         }
 
+        // STAGE 2: Frontend Build
         stage('Frontend Build') {
             steps {
                 dir('frontend') {
@@ -30,6 +32,7 @@ pipeline {
             }
         }
 
+        // STAGE 3: Backend Build and Tests
         stage('Backend Build and Tests') {
             steps {
                 dir('backend') {
@@ -48,6 +51,7 @@ pipeline {
             }
         }
 
+        // STAGE 4: SonarQube Analysis
         stage('SonarQube Analysis') {
             steps {
                 catchError(
@@ -72,6 +76,7 @@ pipeline {
             }
         }
 
+        // STAGE 5: Docker Build
         stage('Docker Build') {
             steps {
                 script {
@@ -95,6 +100,7 @@ pipeline {
             }
         }
 
+        // STAGE 6: Trivy Security Scan
         stage('Trivy Scan') {
             steps {
                 sh '''
@@ -117,50 +123,51 @@ pipeline {
                 '''
             }
         }
-    }
 
-stage('Harbor Push') {
-    steps {
-        withCredentials([
-            usernamePassword(
-                credentialsId: 'harbor-credentials',
-                usernameVariable: 'HARBOR_USER',
-                passwordVariable: 'HARBOR_PASSWORD'
-            )
-        ]) {
-            sh '''
-                set -eu
+        // STAGE 7: Harbor Push
+        stage('Harbor Push') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'harbor-credentials',
+                        usernameVariable: 'HARBOR_USER',
+                        passwordVariable: 'HARBOR_PASSWORD'
+                    )
+                ]) {
+                    sh '''
+                        set -eu
 
-                HARBOR_REGISTRY="host.docker.internal:8082"
+                        HARBOR_REGISTRY="host.docker.internal:8082"
 
-                HARBOR_IMAGE="$HARBOR_REGISTRY/library-management-usecase1/library-backend:$IMAGE_TAG"
+                        HARBOR_IMAGE="$HARBOR_REGISTRY/library-management-usecase1/library-backend:$IMAGE_TAG"
 
-                echo "Tagging Docker image for Harbor"
+                        echo "Tagging Docker image for Harbor"
 
-                docker tag \
-                    "library-backend:$IMAGE_TAG" \
-                    "$HARBOR_IMAGE"
+                        docker tag \
+                            "library-backend:$IMAGE_TAG" \
+                            "$HARBOR_IMAGE"
 
-                echo "Logging in to Harbor"
+                        echo "Logging in to Harbor"
 
-                export DOCKER_CONFIG="$(mktemp -d)"
-                trap 'rm -rf "$DOCKER_CONFIG"' EXIT
+                        export DOCKER_CONFIG="$(mktemp -d)"
+                        trap 'rm -rf "$DOCKER_CONFIG"' EXIT
 
-                printf '%s' "$HARBOR_PASSWORD" | \
-                    docker login "$HARBOR_REGISTRY" \
-                    --username "$HARBOR_USER" \
-                    --password-stdin
+                        printf '%s' "$HARBOR_PASSWORD" | \
+                            docker login "$HARBOR_REGISTRY" \
+                            --username "$HARBOR_USER" \
+                            --password-stdin
 
-                echo "Pushing Docker image to Harbor"
+                        echo "Pushing Docker image to Harbor"
 
-                docker push "$HARBOR_IMAGE"
+                        docker push "$HARBOR_IMAGE"
 
-                echo "Harbor image push completed successfully"
-            '''
+                        echo "Harbor image push completed successfully"
+                    '''
+                }
+            }
         }
-    }
-}
 
+    }
 
     post {
         success {
