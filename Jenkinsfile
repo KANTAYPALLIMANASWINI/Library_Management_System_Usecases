@@ -7,7 +7,7 @@ pipeline {
         stage('Environment Check') {
             steps {
                 sh '''
-                    echo "Checking Jenkins build environment"
+                    echo "Checking Jenkins environment"
                     java -version
                     git --version
                     docker --version
@@ -48,6 +48,30 @@ pipeline {
             }
         }
 
+        stage('SonarQube Analysis') {
+            steps {
+                catchError(
+                    buildResult: 'UNSTABLE',
+                    stageResult: 'FAILURE'
+                ) {
+                    dir('backend') {
+                        withSonarQubeEnv('SonarQube') {
+                            withEnv(["PATH+MAVEN=${tool 'Maven3'}/bin"]) {
+                                sh '''
+                                    echo "Running SonarQube code analysis"
+
+                                    mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar \
+                                        -Dsonar.projectKey=Library-Management-System
+
+                                    echo "SonarQube analysis completed"
+                                '''
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         stage('Docker Build') {
             steps {
                 script {
@@ -81,7 +105,9 @@ pipeline {
                         -v trivy-cache:/root/.cache/ \
                         aquasec/trivy:0.76.2 image \
                         --image-src docker \
-                        --timeout 30m \
+                        --db-repository ghcr.io/aquasecurity/trivy-db:2 \
+                        --java-db-repository ghcr.io/aquasecurity/trivy-java-db:1 \
+                        --timeout 8m \
                         --scanners vuln \
                         --severity HIGH,CRITICAL \
                         --exit-code 1 \
@@ -95,11 +121,15 @@ pipeline {
 
     post {
         success {
-            echo 'Jenkins pipeline completed successfully.'
+            echo 'SUCCESS: Jenkins pipeline completed.'
+        }
+
+        unstable {
+            echo 'UNSTABLE: SonarQube analysis encountered an issue.'
         }
 
         failure {
-            echo 'Jenkins pipeline failed. Check Console Output.'
+            echo 'FAILURE: Check Jenkins Console Output.'
         }
     }
 }
