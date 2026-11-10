@@ -3,6 +3,7 @@ pipeline {
     agent any
 
     stages {
+
         stage('Environment Check') {
             steps {
                 sh '''
@@ -33,13 +34,22 @@ pipeline {
             }
         }
 
-        stage('Backend Unit Tests') {
+        stage('Backend Unit Tests and JaCoCo') {
             steps {
                 dir('backend') {
                     withEnv(["PATH+MAVEN=${tool 'Maven3'}/bin"]) {
                         sh '''
-                            mvn --version
-                            mvn test
+                            echo "Building backend and running unit tests"
+
+                            mvn -B verify
+
+                            echo "Checking JaCoCo XML report"
+
+                            test -s target/site/jacoco/jacoco.xml
+
+                            echo "JaCoCo coverage report generated"
+
+                            test -f target/library-1.0.0.jar
                         '''
                     }
                 }
@@ -52,8 +62,11 @@ pipeline {
                     withSonarQubeEnv('SonarQube') {
                         withEnv(["PATH+MAVEN=${tool 'Maven3'}/bin"]) {
                             sh '''
+                                echo "Running SonarQube analysis"
+
                                 mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar \
-                                  -Dsonar.projectKey=Library-Management-System
+                                    -Dsonar.projectKey=Library-Management-System \
+                                    -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
                             '''
                         }
                     }
@@ -72,12 +85,13 @@ pipeline {
         stage('Package Backend') {
             steps {
                 dir('backend') {
-                    withEnv(["PATH+MAVEN=${tool 'Maven3'}/bin"]) {
-                        sh '''
-                            mvn -B -DskipTests package
-                            test -f target/library-1.0.0.jar
-                        '''
-                    }
+                    sh '''
+                        echo "Verifying packaged backend JAR"
+
+                        test -f target/library-1.0.0.jar
+
+                        echo "Backend JAR is ready"
+                    '''
                 }
             }
         }
@@ -116,6 +130,7 @@ pipeline {
                         aquasec/trivy:0.76.2 image \
                         --image-src docker \
                         --timeout 30m \
+                        --scanners vuln \
                         --severity HIGH,CRITICAL \
                         --exit-code 1 \
                         library-backend:$IMAGE_TAG
@@ -130,6 +145,7 @@ pipeline {
         success {
             echo 'Jenkins CI pipeline completed successfully.'
         }
+
         failure {
             echo 'Jenkins CI pipeline failed. Check Console Output.'
         }
