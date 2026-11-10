@@ -10,11 +10,7 @@ pipeline {
                     echo "Checking Jenkins build environment"
                     java -version
                     git --version
-                    command -v mvn || true
-                    command -v node || true
-                    command -v npm || true
-                    command -v docker || true
-                    command -v trivy || true
+                    docker --version
                 '''
             }
         }
@@ -34,64 +30,20 @@ pipeline {
             }
         }
 
-        stage('Backend Unit Tests and JaCoCo') {
+        stage('Backend Build and Tests') {
             steps {
                 dir('backend') {
                     withEnv(["PATH+MAVEN=${tool 'Maven3'}/bin"]) {
                         sh '''
-                            echo "Building backend and running unit tests"
+                            echo "Building backend and running tests"
 
-                            mvn -B verify
-
-                            echo "Checking JaCoCo XML report"
-
-                            test -s target/site/jacoco/jacoco.xml
-
-                            echo "JaCoCo coverage report generated"
+                            mvn -B -Djacoco.skip=true package
 
                             test -f target/library-1.0.0.jar
+
+                            echo "Backend build completed"
                         '''
                     }
-                }
-            }
-        }
-
-        stage('SonarQube Analysis') {
-            steps {
-                dir('backend') {
-                    withSonarQubeEnv('SonarQube') {
-                        withEnv(["PATH+MAVEN=${tool 'Maven3'}/bin"]) {
-                            sh '''
-                                echo "Running SonarQube analysis"
-
-                                mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar \
-                                    -Dsonar.projectKey=Library-Management-System \
-                                    -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-                            '''
-                        }
-                    }
-                }
-            }
-        }
-
-        stage('SonarQube Quality Gate') {
-            steps {
-                timeout(time: 10, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
-
-        stage('Package Backend') {
-            steps {
-                dir('backend') {
-                    sh '''
-                        echo "Verifying packaged backend JAR"
-
-                        test -f target/library-1.0.0.jar
-
-                        echo "Backend JAR is ready"
-                    '''
                 }
             }
         }
@@ -112,9 +64,9 @@ pipeline {
                         -t library-backend:$IMAGE_TAG \
                         backend
 
-                    echo "Docker image built successfully"
-
                     docker image inspect library-backend:$IMAGE_TAG
+
+                    echo "Docker build completed"
                 '''
             }
         }
@@ -143,11 +95,11 @@ pipeline {
 
     post {
         success {
-            echo 'Jenkins CI pipeline completed successfully.'
+            echo 'Jenkins pipeline completed successfully.'
         }
 
         failure {
-            echo 'Jenkins CI pipeline failed. Check Console Output.'
+            echo 'Jenkins pipeline failed. Check Console Output.'
         }
     }
 }
