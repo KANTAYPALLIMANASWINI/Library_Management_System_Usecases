@@ -119,6 +119,49 @@ pipeline {
         }
     }
 
+stage('Harbor Push') {
+    steps {
+        withCredentials([
+            usernamePassword(
+                credentialsId: 'harbor-credentials',
+                usernameVariable: 'HARBOR_USER',
+                passwordVariable: 'HARBOR_PASSWORD'
+            )
+        ]) {
+            sh '''
+                set -eu
+
+                HARBOR_REGISTRY="host.docker.internal:8082"
+
+                HARBOR_IMAGE="$HARBOR_REGISTRY/library-management-usecase1/library-backend:$IMAGE_TAG"
+
+                echo "Tagging Docker image for Harbor"
+
+                docker tag \
+                    "library-backend:$IMAGE_TAG" \
+                    "$HARBOR_IMAGE"
+
+                echo "Logging in to Harbor"
+
+                export DOCKER_CONFIG="$(mktemp -d)"
+                trap 'rm -rf "$DOCKER_CONFIG"' EXIT
+
+                printf '%s' "$HARBOR_PASSWORD" | \
+                    docker login "$HARBOR_REGISTRY" \
+                    --username "$HARBOR_USER" \
+                    --password-stdin
+
+                echo "Pushing Docker image to Harbor"
+
+                docker push "$HARBOR_IMAGE"
+
+                echo "Harbor image push completed successfully"
+            '''
+        }
+    }
+}
+
+
     post {
         success {
             echo 'SUCCESS: Jenkins pipeline completed.'
