@@ -1,0 +1,80 @@
+# Values for the Library Management System Helm chart.
+# Use the same immutable Harbor artifact in DEV, STAGE, and PROD-LIKE.
+replicaCount: 1
+
+image:
+  repository: host.docker.internal:8082/library-management-usecase1/library-backend
+  pullPolicy: IfNotPresent
+  tag: "828304f"
+  digest: "sha256:eb0e10a588c10be0b141944674af515eb1cf5b65d2bef58925b7534120942f7f"
+
+# Leave empty while confirming whether the node can pull the private image.
+# If kubelet reports an authorization failure, configure an imagePullSecret.
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+podSecurityContext: {}
+securityContext: {}
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+
+httpRoute:
+  enabled: false
+  annotations: {}
+  parentRefs:
+    - name: gateway
+      sectionName: http
+  hostnames:
+    - chart-example.local
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /headers
+
+resources: {}
+
+# No confirmed Spring Boot HTTP health endpoint yet.
+# Disable the generated '/' probes for initial deployment; configure
+# verified liveness/readiness checks before declaring DEV healthy.
+livenessProbe: null
+readinessProbe: null
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+
+volumes: []
+volumeMounts: []
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Database credentials are NOT stored in this values file.
+# deployment.yaml reads DB_USERNAME and DB_PASSWORD from library-db-secret.
+database:
+  url: "jdbc:postgresql://host.docker.internal:5433/library_management"
