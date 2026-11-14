@@ -113,7 +113,7 @@ pipeline {
                         --image-src docker \
                         --db-repository ghcr.io/aquasecurity/trivy-db:2 \
                         --java-db-repository ghcr.io/aquasecurity/trivy-java-db:1 \
-                        --timeout 8m \
+                        --timeout 20m \
                         --scanners vuln \
                         --severity HIGH,CRITICAL \
                         --exit-code 1 \
