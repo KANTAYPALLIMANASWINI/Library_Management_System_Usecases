@@ -1,0 +1,45 @@
+
+services:
+  database:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-library_management}
+      POSTGRES_USER: ${POSTGRES_USER:-library_app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      DB_URL: jdbc:postgresql://database:5432/${POSTGRES_DB:-library_management}
+      DB_USERNAME: ${POSTGRES_USER:-library_app}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${BACKEND_HOST_PORT:-5001}:8080"
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: unless-stopped
+
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "127.0.0.1:${FRONTEND_HOST_PORT:-8086}:8080"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

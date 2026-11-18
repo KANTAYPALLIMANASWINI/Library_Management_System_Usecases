@@ -43,3 +43,6 @@ Desktop.ini
 .classpath
 .project
 .settings/
+
+# Backend local environment configuration
+backend.env
