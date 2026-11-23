@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: manu-usecase4
+  labels:
+    project: library-management
+    usecase: "4"
