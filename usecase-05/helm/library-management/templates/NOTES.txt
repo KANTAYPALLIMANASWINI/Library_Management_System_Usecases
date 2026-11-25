@@ -1,0 +1,36 @@
+
+Library Management System - Helm Deployment
+
+Release Name: {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}
+
+Application Components:
+- React Frontend
+- Java Spring Boot Backend
+- PostgreSQL Database
+
+Ingress Host: {{ .Values.ingress.host }}
+
+1. Check application pods:
+   kubectl get pods -n {{ .Release.Namespace }}
+
+2. Check Kubernetes services:
+   kubectl get svc -n {{ .Release.Namespace }}
+
+3. Check Ingress:
+   kubectl get ingress -n {{ .Release.Namespace }}
+
+4. Check Helm release:
+   helm status {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+5. Access the application:
+   Start a local port-forward to your NGINX Ingress controller:
+   kubectl port-forward -n ingress-nginx svc/ingress-nginx-controller 8091:80
+
+   Frontend: http://{{ .Values.ingress.host }}:8091/
+   Backend API: http://{{ .Values.ingress.host }}:8091/api
+
+6. Run the Helm connection test:
+   helm test {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+Note: Run the Helm test only after the release is installed.

@@ -1,0 +1,9 @@
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: library-backend-config
+  labels:
+    app: library-backend
+data:
+  DB_URL: "jdbc:postgresql://{{ .Values.postgres.service.name }}:{{ .Values.postgres.service.port }}/{{ .Values.postgres.database }}"
