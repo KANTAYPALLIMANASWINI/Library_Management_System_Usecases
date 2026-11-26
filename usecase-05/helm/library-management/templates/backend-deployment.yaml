@@ -1,4 +1,3 @@
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -47,7 +46,7 @@ spec:
               port: 8080
             periodSeconds: 10
             timeoutSeconds: 3
-            failureThreshold: 18
+            failureThreshold: 60
           readinessProbe:
             tcpSocket:
               port: 8080
