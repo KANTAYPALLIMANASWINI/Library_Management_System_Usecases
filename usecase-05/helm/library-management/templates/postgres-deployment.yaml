@@ -33,7 +33,7 @@ spec:
                 - -c
                 - exec pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
             periodSeconds: 5
-            timeoutSeconds: 3
+            timeoutSeconds: 15
             failureThreshold: 30
           readinessProbe:
             exec:
@@ -42,7 +42,7 @@ spec:
                 - -c
                 - exec pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
             periodSeconds: 10
-            timeoutSeconds: 3
+            timeoutSeconds: 15
             failureThreshold: 3
           livenessProbe:
             exec:
@@ -51,7 +51,7 @@ spec:
                 - -c
                 - exec pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
             periodSeconds: 20
-            timeoutSeconds: 3
+            timeoutSeconds: 15
             failureThreshold: 3
           volumeMounts:
             - name: postgres-storage
@@ -60,3 +60,4 @@ spec:
         - name: postgres-storage
           persistentVolumeClaim:
             claimName: postgres-pvc
+
